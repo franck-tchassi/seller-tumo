@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Plateforme Client (marketplace)
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  sessions     Session[]
+  reviews      Review[]
+  cart         Cart?
+}
+
+// Plateforme Vendeur (seller) - Version allégée
+model Seller {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  storeName    String // Gardé mais optionnel si vous voulez
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+}
+
+// (Le reste reste strictement identique à votre version originale)
+model Session {
+  id        String   @id
+  userId    Int? // Pour les User
+  sellerId  Int? // Pour les Seller
+  expiresAt DateTime
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seller    Seller?  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  productId String
+  userId    Int
+  rating    Int      @default(1)
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+}
+
+model CartLineItem {
+  id              String  @id
+  productType     String // 'sanity' ou 'seller'
+  sanityProductId String?
+  sellerProductId String?
+  quantity        Int
+  title           String
+  price           Float
+  image           String
+  cartId          String
+  cart            Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+}
+
+model Cart {
+  id     String         @id
+  userId Int?           @unique
+  user   User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  CartLineItem[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  inventory   Int      @default(0)
+  images      String[]
+  categories  String[]
+  sellerId    Int
+  seller      Seller   @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  reviews     Review[]
+
+  @@index([sellerId])
+}
