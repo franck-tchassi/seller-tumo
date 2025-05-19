@@ -4,7 +4,7 @@ import { prisma } from "../db/prisma";
 import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 
-import type { Seller, Session } from "../../generated/prisma";
+import type { Seller, Session } from "../../lib/generated/prisma";
 
 import { cookies } from "next/headers";
 import { cache } from "react";
